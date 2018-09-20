@@ -20,8 +20,8 @@
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
 //By Yunfan
-void bundle(unsigned int a, unsigned int b, unsigned char c, char* message); 
-unsigned int getResult(char* buf, int index);
+void bundle(unsigned int a, unsigned int b, unsigned char c, unsigned char* message); 
+unsigned int getResult(unsigned char* buf, int index);
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -36,7 +36,7 @@ void *get_in_addr(struct sockaddr *sa)
 int main(int argc, char *argv[])
 {
 	int sockfd, numbytes;  
-	char buf[MAXDATASIZE];
+	unsigned char buf[MAXDATASIZE];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
 	char s[INET6_ADDRSTRLEN];
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	//By Yunfan
 	unsigned int a,b,result;
 	unsigned char c;
-	char message[9];
+	unsigned char message[9];
 	int len;
 	int i;
 	
@@ -130,8 +130,10 @@ int main(int argc, char *argv[])
 	//printf("client: received '%s'\n",buf);
 	//for(i = 0; i < numbytes - 1; i++)
 		//printf("client12: buf[%d] = %x\n", i, buf[i]);
-	//rintf("client12: buf[%d] = %c\n", 13, buf[13]);
+	//printf("client12: buf[%d] = %c\n", 13, buf[13]);
 
+	if(buf[13] == '2')
+		printf("Warning: The result is invalid.\n");
 	result = getResult(buf, 9); // The result part begin at index = 9 in buf.
 	printf("The result received from server12 is %u\n", result);
 
@@ -147,7 +149,7 @@ int main(int argc, char *argv[])
  * unsigned char c: a operator read from command line argument
  * char * message: The message which will be sent to the server
  * **/
-void bundle(unsigned int a, unsigned int b, unsigned char c, char* message) {
+void bundle(unsigned int a, unsigned int b, unsigned char c, unsigned char* message) {
 	int k = 24;
     int i = 0;
 	
@@ -156,7 +158,7 @@ void bundle(unsigned int a, unsigned int b, unsigned char c, char* message) {
 	i++;
 
     while(k >= 0) {
-        message[i] = (int) ((a >> k) & 0xFF);
+        message[i] = (unsigned int) ((a >> k) & 0xFF);
         //printf("message[%d]: %x\n", i, message[i]);
         i++;
         k -= 8;
@@ -164,7 +166,7 @@ void bundle(unsigned int a, unsigned int b, unsigned char c, char* message) {
 	
 	k = 24;
 	while(k >= 0) {
-        message[i] = (int) ((b >> k) & 0xFF);
+        message[i] = (unsigned int) ((b >> k) & 0xFF);
         //printf("message[%d]: %x\n", i, message[i]);
         i++;
         k -= 8;
@@ -179,15 +181,15 @@ void bundle(unsigned int a, unsigned int b, unsigned char c, char* message) {
  * int index: The begin index for result
  * return: the unsigned int result
  * **/
-unsigned int getResult(char* buf, int index) {
+unsigned int getResult(unsigned char* buf, int index) {
 	unsigned int result = 0;
 	int i = index;
 
 	while(i < (index + 4)){
-		result *= 16;
+		result *= 16 * 16;
 		result += (unsigned int)buf[i];
 		i++;
 	}
-	//printf("result = %u\n", result);
+	printf("result = %u\n", result);
 	return result;
 }

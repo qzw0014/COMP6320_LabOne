@@ -21,7 +21,7 @@
 
 //By Yunfan
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
-void bundle(char* buf, char* message); //unbundle buf and bundle result into message
+void bundle(unsigned char* buf, unsigned char* message); //unbundle buf and bundle result into message
 
 void sigchld_handler(int s)
 {
@@ -58,8 +58,8 @@ int main(void)
 	int rv;
 
 	//By Yunfan
-	char buf[MAXDATASIZE];
-	char message[14];
+	unsigned char buf[MAXDATASIZE];
+	unsigned char message[14];
 	int numbytes;
 
 	memset(&hints, 0, sizeof hints);
@@ -140,7 +140,7 @@ int main(void)
 				perror("recv");
 				exit(1);
 			}
-			printf("server12: recieve message from client12: %s\n", buf);
+			printf("server12: recieve message from client12\n");
 			//unbundle buf and bundle result into message
 			bundle(buf, message);
 
@@ -160,14 +160,14 @@ int main(void)
 
 //Yunfan
 /************   unbundle the a,b,c from the buf and bundle result into the message   ***************
- * char* buf: The string buf is received from client, 
- * char * message: The message which will be sent to the client
+ * unsigned char* buf: The string buf is received from client, 
+ * unsigned char * message: The message which will be sent to the client
  * The total length of buf should be 9.
  * The first 4 bytes are represented to a,
  * the next 4 bytes are represented to b,
  * the last byte is presented to c.
 */
-void bundle(char* buf, char* message) {
+void bundle(unsigned char* buf, unsigned char* message) {
 	unsigned char c;
 	unsigned int a = 0,b = 0, result = 0;
 	unsigned char isValid = '1';
@@ -178,14 +178,14 @@ void bundle(char* buf, char* message) {
 	i++;
 
 	while(i < 5){
-		a *= 16;
+		a *= 16 * 16;
 		a += (unsigned int)buf[i];
 		i++;
 	}
 	printf("server12: a = %u\n", a);
 
 	while(i < 9){
-		b *= 16;
+		b *= 16 * 16;
 		b += (unsigned int)buf[i];
 		i++;
 	}
@@ -225,7 +225,7 @@ void bundle(char* buf, char* message) {
 	int k = 24;
 	while(k >= 0) {   //attach result to message
         message[i] = (int) ((result >> k) & 0xFF);
-        //printf("message[%d]: %x\n", i, message[i]);
+        //printf("server12: message[%d]: %x\n", i, message[i]);
         i++;
         k -= 8;
 	}
