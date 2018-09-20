@@ -17,7 +17,7 @@
 #include <netdb.h>
 #include <sys/timeb.h>
 
-#define SERVERPORT "10013"	// the port users will be connecting to
+#define SERVERPORT "10010"	// the port users will be connecting to
 #define MAXBUFLEN 100
 
 int msg_packet(unsigned char *msg, int seq_num, unsigned long time_stamp, char my_str[]);    //  packet all information to a char array

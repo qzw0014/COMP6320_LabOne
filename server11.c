@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define MYPORT "10013"
+#define MYPORT "10010"
 
 #define MAXBUFLEN 100
 

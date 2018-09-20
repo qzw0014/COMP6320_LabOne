@@ -22,7 +22,7 @@
 #include <stdbool.h>
 
 
-#define SERVERPORT "10013"
+#define SERVERPORT "10010"
 
 #define MAXBUFLEN 100
 
