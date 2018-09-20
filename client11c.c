@@ -17,12 +17,12 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/types.h>
-#include <time.h>
+#include <sys/timeb.h>
 #include <limits.h>
 #include <stdbool.h>
 
 
-#define SERVERPORT "10010"
+#define SERVERPORT "10013"
 
 #define MAXBUFLEN 100
 
@@ -35,9 +35,11 @@ int msg_packet(unsigned char *msg, int seq_num, long time_stamp, int my_num);   
 
 void digit_to_byte_array(long number, int bytes, char *results);  //  convert number to bytes array
 
-void msg_unpack(unsigned char *msg, int msg_len, long *messages);  //  unpack all information from reveived message
+void msg_unpack(unsigned char *msg, int msg_len, unsigned long *messages);  //  unpack all information from reveived message
 
-long bytes_array_to_digit(unsigned char *bytes_array, int length);  //  convert bytes array to a digital number
+unsigned long bytes_array_to_digit(unsigned char *bytes_array, int length);  //  convert bytes array to a digital number
+
+unsigned long get_time_msec();
 
 int main(int argc, char *argv[]) {
     int pid;
@@ -111,7 +113,7 @@ void child_process(int sockfd, struct addrinfo *servinfo) {
     for (i = 0; i < 10000; i++) {
         my_num = i + 1;
         seq_num = i;
-        time_stamp = time(NULL);
+        time_stamp = get_time_msec();
         msg_length = msg_packet(&message, seq_num, time_stamp, my_num);
         if ((numbytes = sendto(sockfd, message, msg_length, 0, servinfo->ai_addr, servinfo->ai_addrlen)) == -1) {
             perror("Client: send message error");
@@ -127,18 +129,18 @@ void child_process(int sockfd, struct addrinfo *servinfo) {
 //  - Receiving responses from server and reporting missing echoes;
 //  - Calculating the smallest, largest, and average round trip times;
 void parent_process(int sockfd, struct sockaddr_storage *server_addr, socklen_t *serveraddr_len) {
-    int iter = 0;
+    long iter = 0;
     int numbytes, i;
-    long recv_times[10000];
-    long send_times[10000];
+    unsigned long recv_times[10000];
+    unsigned long send_times[10000];
     long messages[4];            // 0 - Tottal Message Length (bytes); 1 - Sequence Number; 2 - Timestamp (ms); 3 - String
     unsigned char recv_meg[MAXBUFLEN];
     int samples[10001];
     int missing_echoes = 0;
-    double small = __DBL_MAX__;
-    double large = __DBL_MIN__;
-    double average = 0;
-    double differ = 0;
+    unsigned long small = __LONG_MAX__;
+    unsigned long large = 0;
+    unsigned long average = 0;
+    unsigned long differ = 0;
     
     memset(&samples, 0, sizeof(samples));
     memset(&recv_times, -1, sizeof(recv_times));
@@ -154,7 +156,16 @@ void parent_process(int sockfd, struct sockaddr_storage *server_addr, socklen_t 
         if (messages[1] >=0 && messages[1] <= 10000){
             samples[(int)messages[3]] = 1;
             send_times[(int)messages[1]] = messages[2];
-            recv_times[(int)messages[1]] = time(NULL);
+            //printf("send_times[%d]: %ld\n", (int)messages[1], send_times[messages[1]]);
+            recv_times[(int)messages[1]] = get_time_msec();
+            //printf("recv_times[%d]: %ld\n", (int)messages[1], send_times[messages[1]]);
+            differ = recv_times[(int)messages[1]] - send_times[(int)messages[1]];
+            if (differ > large) 
+                large = differ;
+            else if (differ < small)
+                small = differ;
+            average += differ;
+            iter++;
         }
     }
     
@@ -163,21 +174,12 @@ void parent_process(int sockfd, struct sockaddr_storage *server_addr, socklen_t 
             //printf("Missing echo: %d\n", i);
             missing_echoes++;
         }
-        else {
-            differ = difftime(recv_times[i - 1], send_times[i - 1]);
-            if (differ > large)
-                large = differ;
-            if (differ < small)
-                small = differ;
-            average = average + differ;
-            iter++;
-        }
     }
     average = average / iter;
     printf("Client: missing echoes is %d\n", missing_echoes);
-    printf("Client: the smallest round trip time is %f.\n", small);
-    printf("Client: the largest round trip time is %f.\n", large);
-    printf("Client: the average round trip time is %f.\n", average);
+    printf("Client: the smallest round trip time is %ld\n", small);
+    printf("Client: the largest round trip time is %ld\n", large);
+    printf("Client: the average round trip time is %ld\n", average);
     
 }
 
@@ -217,7 +219,7 @@ void digit_to_byte_array(long number, int bytes, char *results) {
 
 //  unpack the bytes array which is reeived from the server
 //  -this function unpack reveiced message to Tottal Message Length (bytes); Sequence Number;  Timestamp (ms); Message
-void msg_unpack(unsigned char *msg, int msg_len, long *messages) {
+void msg_unpack(unsigned char *msg, int msg_len, unsigned long *messages) {
     int total_len, seq_num, message;
     int i;
     long timestamp;
@@ -236,7 +238,7 @@ void msg_unpack(unsigned char *msg, int msg_len, long *messages) {
         seq_num_bytes_array[i] = msg[i + 2];
     for (i = 0; i < 8; i++)
         timestamp_bytes_array[i] = msg[i + 6];
-    for (i = 0; i < msg_len; i++)
+    for (i = 0; i < (msg_len - 14); i++)
         message_str[i] = msg[i + 14];
     
     total_len = bytes_array_to_digit(&total_len_bytes_array,2);
@@ -253,8 +255,8 @@ void msg_unpack(unsigned char *msg, int msg_len, long *messages) {
 
 // bytes array to digit function
 // - convert a bytes array to a long interger
-long bytes_array_to_digit(unsigned char *bytes_array, int length) {
-    int result = 0;
+unsigned long bytes_array_to_digit(unsigned char *bytes_array, int length) {
+    unsigned long result = 0;
     int i;
     for (i = length - 1; i > -1; i--) {
         result = result + bytes_array[i];
@@ -263,4 +265,13 @@ long bytes_array_to_digit(unsigned char *bytes_array, int length) {
         }
     }
     return result;
+}
+
+// get current time in millisecond
+unsigned long get_time_msec() {
+	unsigned long result;
+	struct timeb current_timeb;
+	ftime(&current_timeb);
+	result = current_timeb.time * 1000 + current_timeb.millitm;
+	return result;
 }

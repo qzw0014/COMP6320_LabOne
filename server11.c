@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define MYPORT "10010"
+#define MYPORT "10013"
 
 #define MAXBUFLEN 100
 
@@ -38,10 +38,10 @@ int main(void)
     int rv;
     int numbytes;
     struct sockaddr_storage their_addr;
-    char buf[MAXBUFLEN];
+    unsigned char buf[MAXBUFLEN];
     socklen_t addr_len;
     char s[INET_ADDRSTRLEN];
-    
+
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // set to AF_INET to force IPv4
     hints.ai_socktype = SOCK_DGRAM;
@@ -63,7 +63,7 @@ int main(void)
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
             perror("listener: bind");
-            continue;
+            exit(1);
         }
         
         break;
@@ -86,11 +86,13 @@ int main(void)
                                  (struct sockaddr *)&their_addr, &addr_len)) == -1) {
             perror("server11: recvfrom err.");
             exit(1);
-        }  
-        
-	    // int i = 0;
-        // for (i = 0 ; i < numbytes; i++)
+        }
+
+        // printf("buf: ");
+        // int i = 0;
+        // for (i = 0; i < numbytes; i++) {
         //     printf("%x ", buf[i]);
+        // }
         // printf("\n");
 
         if ((numbytes = sendto(sockfd, buf, numbytes, 0, (struct sockaddr *)&their_addr, addr_len)) == -1) {
