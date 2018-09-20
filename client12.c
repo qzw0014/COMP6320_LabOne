@@ -15,12 +15,13 @@
 
 #include <arpa/inet.h>
 
-#define PORT "3490" // the port client will be connecting to 
+#define PORT "3498" // the port client will be connecting to 
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
 //By Yunfan
 void bundle(unsigned int a, unsigned int b, unsigned char c, char* message); 
+unsigned int getResult(char* buf, int index);
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -41,11 +42,12 @@ int main(int argc, char *argv[])
 	char s[INET6_ADDRSTRLEN];
 
 	//By Yunfan
-	unsigned int a,b;
+	unsigned int a,b,result;
 	unsigned char c;
 	char message[9];
 	int len;
 	int i;
+	
 
 	if (argc != 5) {
 		fprintf(stderr,"usage: client hostname\n");
@@ -102,14 +104,16 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	bundle(a, b, c, message);
-	len = sizeof(message) / sizeof(message[0]);
-	printf("len = %d", len);
-	//int i = 0;
-	for(i = 0; i < len; i++)
-		printf("message: %x\n", message[i]);
-
 	//By Yunfan
+	//bundle the a b c into the message
+	bundle(a, b, c, message);  
+	len = sizeof(message) / sizeof(message[0]);
+	//printf("len = %d", len);
+	//int i = 0;
+	//for(i = 0; i < len; i++)
+		//printf("message: %x\n", message[i]);
+
+	//By Yunfan, send the message to the server
 	if (send(sockfd, message, len, 0) == -1) {
 		perror("client12: send");
 		exit(1);
@@ -123,17 +127,26 @@ int main(int argc, char *argv[])
 
 	buf[numbytes] = '\0';
 
-	printf("client: received '%s'\n",buf);
+	//printf("client: received '%s'\n",buf);
+	//for(i = 0; i < numbytes - 1; i++)
+		//printf("client12: buf[%d] = %x\n", i, buf[i]);
+	//rintf("client12: buf[%d] = %c\n", 13, buf[13]);
 
-	for(i = 0; i < numbytes - 1; i++)
-		printf("client12: buf[%d] = %x\n", i, buf[i]);
-	printf("client12: buf[%d] = %c\n", 13, buf[13]);
+	result = getResult(buf, 9); // The result part begin at index = 9 in buf.
+	printf("The result received from server12 is %u\n", result);
 
 	close(sockfd);
 
 	return 0;
 }
 
+//Yunfan
+/************   bundle the a,b,c into the message   ***************
+ * unsigned int a: a operand read from command line argument
+ * unsigned int b: a operand read from command line argument
+ * unsigned char c: a operator read from command line argument
+ * char * message: The message which will be sent to the server
+ * **/
 void bundle(unsigned int a, unsigned int b, unsigned char c, char* message) {
 	int k = 24;
     int i = 0;
@@ -158,4 +171,23 @@ void bundle(unsigned int a, unsigned int b, unsigned char c, char* message) {
 	}
 	
 	
+}
+
+//Yunfan
+/************   bundle the a,b,c into the message   ***************
+ * char* buf: The string buf is received from server
+ * int index: The begin index for result
+ * return: the unsigned int result
+ * **/
+unsigned int getResult(char* buf, int index) {
+	unsigned int result = 0;
+	int i = index;
+
+	while(i < (index + 4)){
+		result *= 16;
+		result += (unsigned int)buf[i];
+		i++;
+	}
+	//printf("result = %u\n", result);
+	return result;
 }

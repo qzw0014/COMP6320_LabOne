@@ -15,13 +15,13 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#define PORT "3490"  // the port users will be connecting to
+#define PORT "3498"  // the port users will be connecting to
 
 #define BACKLOG 10	 // how many pending connections queue will hold
 
 //By Yunfan
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
-void bundle(char* buf, char* message);
+void bundle(char* buf, char* message); //unbundle buf and bundle result into message
 
 void sigchld_handler(int s)
 {
@@ -134,14 +134,17 @@ int main(void)
 			close(sockfd); // child doesn't need the listener
 
 			//By Yunfan
+			/*receive packet from client and store them to buf*/
 			printf("child process\n");
 			if ((numbytes = recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1) {
 				perror("recv");
 				exit(1);
 			}
 			printf("server12: recieve message from client12: %s\n", buf);
+			//unbundle buf and bundle result into message
 			bundle(buf, message);
 
+			//send message to the client
 			if (send(new_fd, message, 14, 0) == -1)
 				perror("send");
 
@@ -156,10 +159,13 @@ int main(void)
 }
 
 //Yunfan
-/* The length of buf should be 9, 
-* the first 4 bytes are represented to a,
-* the next 4 bytes are represented to b,
-* the last byte is presented to c.
+/************   unbundle the a,b,c from the buf and bundle result into the message   ***************
+ * char* buf: The string buf is received from client, 
+ * char * message: The message which will be sent to the client
+ * The total length of buf should be 9.
+ * The first 4 bytes are represented to a,
+ * the next 4 bytes are represented to b,
+ * the last byte is presented to c.
 */
 void bundle(char* buf, char* message) {
 	unsigned char c;
@@ -206,7 +212,7 @@ void bundle(char* buf, char* message) {
 			isValid = '2';
 
 	}
-	printf("result = %u\n", result);
+	printf("server12: result = %u\n", result);
 
 	//copy buf to message cause the first 9 bytes are same.
 	//strncpy(message, buf, 9);  //Not sure why didn't work
