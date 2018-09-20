@@ -44,6 +44,8 @@ int main(int argc, char *argv[])
 	unsigned int a,b;
 	unsigned char c;
 	char message[9];
+	int len;
+	int i;
 
 	if (argc != 5) {
 		fprintf(stderr,"usage: client hostname\n");
@@ -96,9 +98,10 @@ int main(int argc, char *argv[])
 	printf("b = %u\n", b);
 	printf("c = %c\n", c);
 	bundle(a, b, c, message);
-	int len = sizeof(message) / sizeof(message[0]);
+	len = sizeof(message) / sizeof(message[0]);
 	printf("len = %d", len);
-	for(int i = 0; i < len; i++)
+	//int i = 0;
+	for(i = 0; i < len; i++)
 		printf("message: %x\n", message[i]);
 
 	//By Yunfan
@@ -117,7 +120,7 @@ int main(int argc, char *argv[])
 
 	printf("client: received '%s'\n",buf);
 
-	for(int i = 0; i < numbytes - 1; i++)
+	for(i = 0; i < numbytes - 1; i++)
 		printf("client12: buf[%d] = %x\n", i, buf[i]);
 	printf("client12: buf[%d] = %c\n", 13, buf[13]);
 
