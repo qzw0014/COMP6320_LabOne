@@ -97,6 +97,11 @@ int main(int argc, char *argv[])
 	printf("a = %u\n", a);
 	printf("b = %u\n", b);
 	printf("c = %c\n", c);
+	if(!(c == '+' || c== '-' || c== '*' || c == '/') ){
+		printf("c should be +, -, * or /.");
+		exit(1);
+	}
+
 	bundle(a, b, c, message);
 	len = sizeof(message) / sizeof(message[0]);
 	printf("len = %d", len);
@@ -134,12 +139,12 @@ void bundle(unsigned int a, unsigned int b, unsigned char c, char* message) {
     int i = 0;
 	
 	message[i] = c;
-	printf("message[%d]: %x\n", i, message[i]);
+	//printf("message[%d]: %x\n", i, message[i]);
 	i++;
 
     while(k >= 0) {
         message[i] = (int) ((a >> k) & 0xFF);
-        printf("message[%d]: %x\n", i, message[i]);
+        //printf("message[%d]: %x\n", i, message[i]);
         i++;
         k -= 8;
 	}
@@ -147,7 +152,7 @@ void bundle(unsigned int a, unsigned int b, unsigned char c, char* message) {
 	k = 24;
 	while(k >= 0) {
         message[i] = (int) ((b >> k) & 0xFF);
-        printf("message[%d]: %x\n", i, message[i]);
+        //printf("message[%d]: %x\n", i, message[i]);
         i++;
         k -= 8;
 	}
