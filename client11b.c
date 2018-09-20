@@ -1,7 +1,10 @@
-/*
-** talker.c -- a datagram "client" demo
-*/
-
+//
+//  client11b.c
+//  datagram_socket_client11b
+//
+//  Created by Qian Wang on 9/8/18.
+//  Copyright © 2018 Qian Wang. All rights reserved.
+//
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

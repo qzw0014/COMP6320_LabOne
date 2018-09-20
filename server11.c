@@ -1,8 +1,8 @@
 //
 //  server11.c
-//  datagram_socket_server
+//  datagram_socket_server11
 //
-//  Created by 王谦 on 9/8/18.
+//  Created by Qian Wang on 9/8/18.
 //  Copyright © 2018 Qian Wang. All rights reserved.
 //
 
