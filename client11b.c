@@ -22,7 +22,7 @@
 
 int msg_packet(unsigned char *msg, int seq_num, unsigned long time_stamp, char my_str[]);    //  packet all information to a char array
 
-void digit_to_byte_array(long number, int bytes, char *results);  //  convert number to bytes array
+void digit_to_byte_array(long number, int bytes, unsigned char *results);  //  convert number to bytes array
 
 void msg_unpack(unsigned char *msg, int msg_len, unsigned long *messages, char *buf);  //  unpack all information from reveived message
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
 	send_time = get_time_msec();
 	//printf("send_time: %lx\n", send_time);
-	send_msg_len = msg_packet(&send_msg, 0, send_time, A);
+	send_msg_len = msg_packet(send_msg, 0, send_time, A);
 
 	if ((numbytes = sendto(sockfd, send_msg, send_msg_len, 0,
 			 p->ai_addr, p->ai_addrlen)) == -1) {
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     // }
     // printf("\n");
 
-	msg_unpack(&receive_msg, strlen(A), &messages, &buf);
+	msg_unpack(receive_msg, strlen(A), messages, buf);
 
 	//printf("send_time: %ld\n", messages[2]);
 	receive_time = get_time_msec();
@@ -138,10 +138,10 @@ int msg_packet(unsigned char *msg, int seq_num, unsigned long time_stamp, char m
     unsigned char seq_bytes_array[4];
     unsigned char time_stamp_bytes_array[8];
     
-    digit_to_byte_array(seq_num, 4, &seq_bytes_array);
-    digit_to_byte_array(time_stamp, 8, &time_stamp_bytes_array);
+    digit_to_byte_array(seq_num, 4, seq_bytes_array);
+    digit_to_byte_array(time_stamp, 8, time_stamp_bytes_array);
     msg_len = msg_len + strlen(my_str);         // + 1 is for \0
-    digit_to_byte_array(msg_len, 2, &msg_len_bytes_array);
+    digit_to_byte_array(msg_len, 2, msg_len_bytes_array);
     
     memcpy(msg, msg_len_bytes_array, sizeof(msg_len_bytes_array));
     memcpy(msg + 2, seq_bytes_array, sizeof(seq_bytes_array));
@@ -153,7 +153,7 @@ int msg_packet(unsigned char *msg, int seq_num, unsigned long time_stamp, char m
 
 //  digit to byte array function
 //  - convert a digital number to a bytes array
-void digit_to_byte_array(long number, int bytes, char *results) {
+void digit_to_byte_array(long number, int bytes, unsigned char *results) {
     int i;
     for (i =0; i < bytes; i++)
         results[i] = (number >> (i * 8)) & 0xff;
@@ -182,9 +182,9 @@ void msg_unpack(unsigned char *msg, int msg_len, unsigned long *messages, char *
     for (i = 0; i < msg_len; i++)
         buf[i] = msg[i + 14];
     
-    total_len = bytes_array_to_digit(&total_len_bytes_array,2);
-    seq_num = bytes_array_to_digit(&seq_num_bytes_array, 4);
-    timestamp = bytes_array_to_digit(&timestamp_bytes_array, 8);
+    total_len = bytes_array_to_digit(total_len_bytes_array,2);
+    seq_num = bytes_array_to_digit(seq_num_bytes_array, 4);
+    timestamp = bytes_array_to_digit(timestamp_bytes_array, 8);
     
     messages[0] = total_len;
     messages[1] = seq_num;

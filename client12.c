@@ -1,5 +1,8 @@
 /*
 ** client.c -- a stream socket client demo
+*
+*@author Yunfan Rao - Group2
+*@version: 9/18/2018
 */
 
 #include <stdio.h>

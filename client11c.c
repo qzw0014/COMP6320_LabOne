@@ -33,7 +33,7 @@ void parent_process(int sockfd, struct sockaddr_storage *server_addr, socklen_t 
 
 int msg_packet(unsigned char *msg, int seq_num, long time_stamp, int my_num);    //  packet all information to a char array
 
-void digit_to_byte_array(long number, int bytes, char *results);  //  convert number to bytes array
+void digit_to_byte_array(long number, int bytes, unsigned char *results);  //  convert number to bytes array
 
 void msg_unpack(unsigned char *msg, int msg_len, unsigned long *messages);  //  unpack all information from reveived message
 
@@ -114,7 +114,7 @@ void child_process(int sockfd, struct addrinfo *servinfo) {
         my_num = i + 1;
         seq_num = i;
         time_stamp = get_time_msec();
-        msg_length = msg_packet(&message, seq_num, time_stamp, my_num);
+        msg_length = msg_packet(message, seq_num, time_stamp, my_num);
         if ((numbytes = sendto(sockfd, message, msg_length, 0, servinfo->ai_addr, servinfo->ai_addrlen)) == -1) {
             perror("Client: send message error");
             exit(1);
@@ -133,7 +133,7 @@ void parent_process(int sockfd, struct sockaddr_storage *server_addr, socklen_t 
     int numbytes, i;
     unsigned long recv_times[10000];
     unsigned long send_times[10000];
-    long messages[4];            // 0 - Tottal Message Length (bytes); 1 - Sequence Number; 2 - Timestamp (ms); 3 - String
+    unsigned long messages[4];            // 0 - Tottal Message Length (bytes); 1 - Sequence Number; 2 - Timestamp (ms); 3 - String
     unsigned char recv_meg[MAXBUFLEN];
     int samples[10001];
     int missing_echoes = 0;
@@ -152,8 +152,8 @@ void parent_process(int sockfd, struct sockaddr_storage *server_addr, socklen_t 
             perror("Client: receiver timeout.");
             break;
         }
-        msg_unpack(&recv_meg, numbytes, &messages);
-        if (messages[1] >=0 && messages[1] <= 10000){
+        msg_unpack(recv_meg, numbytes, messages);
+        if (messages[1] <= 10000){
             samples[(int)messages[3]] = 1;
             send_times[(int)messages[1]] = messages[2];
             //printf("send_times[%d]: %ld\n", (int)messages[1], send_times[messages[1]]);
@@ -177,9 +177,9 @@ void parent_process(int sockfd, struct sockaddr_storage *server_addr, socklen_t 
     }
     average = average / iter;
     printf("Client: missing echoes is %d\n", missing_echoes);
-    printf("Client: the smallest round trip time is %ld\n", small);
-    printf("Client: the largest round trip time is %ld\n", large);
-    printf("Client: the average round trip time is %ld\n", average);
+    printf("Client: the smallest round trip time is %ld milliseconds\n", small);
+    printf("Client: the largest round trip time is %ld milliseconds\n", large);
+    printf("Client: the average round trip time is %ld milliseconds\n", average);
     
 }
 
@@ -195,11 +195,11 @@ int msg_packet(unsigned char *msg, int seq_num, long time_stamp, int my_num) {
     unsigned char time_stamp_bytes_array[8];
     char my_num_str[1024];
     
-    digit_to_byte_array(seq_num, 4, &seq_bytes_array);
-    digit_to_byte_array(time_stamp, 8, &time_stamp_bytes_array);
+    digit_to_byte_array(seq_num, 4, seq_bytes_array);
+    digit_to_byte_array(time_stamp, 8, time_stamp_bytes_array);
     sprintf(my_num_str, "%d", my_num);
     msg_len = msg_len + strlen(my_num_str);         // + 1 is for \0
-    digit_to_byte_array(msg_len, 2, &msg_len_bytes_array);
+    digit_to_byte_array(msg_len, 2, msg_len_bytes_array);
     
     memcpy(msg, msg_len_bytes_array, sizeof(msg_len_bytes_array));
     memcpy(msg + 2, seq_bytes_array, sizeof(seq_bytes_array));
@@ -211,7 +211,7 @@ int msg_packet(unsigned char *msg, int seq_num, long time_stamp, int my_num) {
 
 //  digit to byte array function
 //  - convert a digital number to a bytes array
-void digit_to_byte_array(long number, int bytes, char *results) {
+void digit_to_byte_array(long number, int bytes, unsigned char *results) {
     int i;
     for (i =0; i < bytes; i++)
         results[i] = (number >> (i * 8)) & 0xff;
@@ -241,9 +241,9 @@ void msg_unpack(unsigned char *msg, int msg_len, unsigned long *messages) {
     for (i = 0; i < (msg_len - 14); i++)
         message_str[i] = msg[i + 14];
     
-    total_len = bytes_array_to_digit(&total_len_bytes_array,2);
-    seq_num = bytes_array_to_digit(&seq_num_bytes_array, 4);
-    timestamp = bytes_array_to_digit(&timestamp_bytes_array, 8);
+    total_len = bytes_array_to_digit(total_len_bytes_array,2);
+    seq_num = bytes_array_to_digit(seq_num_bytes_array, 4);
+    timestamp = bytes_array_to_digit(timestamp_bytes_array, 8);
     message = atoi(message_str);
     
     messages[0] = total_len;
